@@ -1,6 +1,16 @@
 [package]
-name = "Crosshair-Overlay"
+name = "crosshair-overlay"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+eframe = "0.27.0"
+egui = "0.27.0"
+winapi = { version = "0.3.9", features = ["winuser"] }
+
+
+[profile.release]
+lto = true
+codegen-units = 1
+opt-level = 3
+strip = true
