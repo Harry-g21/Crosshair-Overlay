@@ -5,11 +5,13 @@ use tray_item::{IconSource, TrayItem};
 
 enum TrayMessage {
     Exit,
+    ToggleCrosshair,
 }
 
 struct CrosshairApp {
     has_enabled_passthrough: bool,
     rx: mpsc::Receiver<TrayMessage>,
+    crosshair_visible: bool,
 }
 
 impl CrosshairApp {
@@ -27,15 +29,20 @@ impl CrosshairApp {
                 }
             };
             
+            let toggle_tx = tx.clone();
+            tray.add_menu_item("Toggle Crosshair", move || {
+                if let Err(e) = toggle_tx.send(TrayMessage::ToggleCrosshair) {
+                    println!("Tray: Failed to send toggle message: {:?}", e);
+                }
+            }).expect("Failed to add toggle menu item");
+
             let exit_tx = tx.clone();
             tray.add_menu_item("Exit", move || {
-                println!("Tray: Exit clicked");
                 if let Err(e) = exit_tx.send(TrayMessage::Exit) {
                     println!("Tray: Failed to send exit message: {:?}", e);
-                } else {
-                    println!("Tray: Sent exit message");
                 }
             }).expect("Failed to add menu item");
+
 
             // Keep the thread alive
             loop {
@@ -46,6 +53,7 @@ impl CrosshairApp {
         Self {
             has_enabled_passthrough: false,
             rx,
+            crosshair_visible: true
         }
     }
 }
@@ -56,7 +64,6 @@ impl eframe::App for CrosshairApp {
     }
     
     fn update(&mut self, ctx: &egui::Context, _frame: &mut eframe::Frame) {
-  
         // Workaround for click passthrough not working on startup
         if !self.has_enabled_passthrough {
             ctx.send_viewport_cmd(ViewportCommand::MousePassthrough(true));
@@ -67,10 +74,17 @@ impl eframe::App for CrosshairApp {
                     println!("Exit");
                     ctx.send_viewport_cmd(ViewportCommand::Close);
                     process::exit(0);
+                },
+                Ok(TrayMessage::ToggleCrosshair) => {
+                    // Toggle the crosshair visibility
+                    self.crosshair_visible = !self.crosshair_visible;
+                    println!("Crosshair visibility: {}", self.crosshair_visible);
+                    
                 }
                 _ => {}
             }
         }
+
 
         // Create a completely transparent frame
         let ui_frame = egui::Frame::none().fill(Color32::TRANSPARENT);
@@ -80,29 +94,32 @@ impl eframe::App for CrosshairApp {
             .frame(ui_frame)
             .show(ctx, |_ui| {});
         
-        let screen_rect = ctx.screen_rect();
-        let center = screen_rect.center();
-        
-        // Use a top-level painter
-        let painter = ctx.layer_painter(egui::LayerId::new(
-            egui::Order::Foreground,
-            egui::Id::new("crosshair"),
-        ));
-        
-        let length = 10.0;
-        let thickness = 2.0;
-        
-        // Draw the crosshair
-        painter.line_segment(
-            [Pos2::new(center.x, center.y - length), Pos2::new(center.x, center.y + length)],
-            Stroke::new(thickness, Color32::GREEN),
-        );
-        
-        painter.line_segment(
-            [Pos2::new(center.x - length, center.y), Pos2::new(center.x + length, center.y)],
-            Stroke::new(thickness, Color32::GREEN),
-        );
+        if self.crosshair_visible {
+            let screen_rect = ctx.screen_rect();
+            let center = screen_rect.center();
+            
+            // Use a top-level painter
+            let painter = ctx.layer_painter(egui::LayerId::new(
+                egui::Order::Foreground,
+                egui::Id::new("crosshair"),
+            ));
+            
+            let length = 5.0;
+            let thickness = 2.0;
+            
+            // Draw the crosshair
+            painter.line_segment(
+                [Pos2::new(center.x, center.y - length), Pos2::new(center.x, center.y + length)],
+                Stroke::new(thickness, Color32::GREEN),
+            );
+            
+            painter.line_segment(
+                [Pos2::new(center.x - length, center.y), Pos2::new(center.x + length, center.y)],
+                Stroke::new(thickness, Color32::GREEN),
+            );
+        }
 
+        ctx.request_repaint();
 
     }
 }
