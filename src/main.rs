@@ -1,3 +1,5 @@
+#![windows_subsystem = "windows"]
+
 use std::{process, sync::mpsc, thread};
 use eframe::{egui, CreationContext};
 use egui::{Color32, Pos2, Stroke, Vec2, WindowLevel, ViewportCommand};

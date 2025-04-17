@@ -2,6 +2,7 @@
 name = "crosshair-overlay"
 version = "0.1.0"
 edition = "2024"
+default-run = "crosshair-overlay"
 
 [dependencies]
 eframe = "0.27.0"
@@ -18,6 +19,8 @@ strip = true
 [build-dependencies]
 embed-resource = "2.0"
 
+[package.metadata.windows]
+subsystem = "windows"
 
 [workspace]
 include = ["assets/**"]
