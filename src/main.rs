@@ -146,6 +146,8 @@ fn main() -> eframe::Result<()> {
     native_options.viewport.resizable = Some(false);
     native_options.viewport.inner_size = Some(Vec2::new(200.0, 200.0).into());
     native_options.viewport.position = Some(window_pos);
+    native_options.viewport.taskbar = Some(false);
+
 
     eframe::run_native(
         "Crosshair Overlay",
