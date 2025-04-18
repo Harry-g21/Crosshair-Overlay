@@ -20,5 +20,5 @@ target/
 
 /target
 
-Inno settings
+#Inno settings
 *.iss
